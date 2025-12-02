@@ -3,13 +3,11 @@
 #include<string.h>
 #include<stdlib.h>
 #include<malloc.h>
-#include<limits.h>
 #include<assert.h>
 
 // Boundary and input file definitions, set as required
 #define INPUT "input.txt"
 #define MAXX 1000
-#define MAXY 1000
 //#define INPUT "unit1.txt"
 
 // Point structure definition
@@ -17,41 +15,6 @@ typedef struct {
 	long int from;
 	long int to;
 } TRange;
-
-// Comparator function example
-int comp(const void *a, const void *b)
-{
-	const int *da = (const int *) a;
-	const int *db = (const int *) b;
-	return (*da > *db) - (*da < *db);
-}
-
-// Example for calling qsort()
-//qsort(array,count,sizeof(),comp);
-
-
-// Print a two-dimensional array
-void printMap (char **map) {
-	int x,y;
-	for(y=0; y<MAXY; y++) {
-		for(x=0; x<MAXX; x++) {
-			printf("%c", map[y][x]);
-		}
-		printf("\n");
-	}
-}
-// Full block character for maps █ and border elements ┃━┗┛┏┓
-// Color printf("\033[1;31mR \033[1;32mG \033[1;34mB \033[0moff\n");
-
-// Retrieve nth neighbor from a map, diagonals are odd, side neighbors even
-int dy[] = { -1, -1, -1, 0, 1, 1,  1,  0};
-int dx[] = { -1,  0,  1, 1, 1, 0, -1, -1};
-char mapnb(char **map, int y, int x, int n) {
-	assert((n>=0) && (n<8));
-	if((y+dy[n]<0) || (y+dy[n]>=MAXY) ||
-	   (x+dx[n]<0) || (x+dx[n]>=MAXX)) return 0;
-	return(map[y+dy[n]][x+dx[n]]);
-}
 
 // Read input file line by line (e.g., into an array)
 TRange *readInput() {
@@ -68,28 +31,10 @@ TRange *readInput() {
 		exit(1); }
 
 	// Allocate one-dimensional array of strings
-	// char **inst=(char**)calloc(MAXX, sizeof(char*));
 	TRange *inst=(TRange*)calloc(MAXX, sizeof(TRange));
-
-	// Allocate a two-dimensional arrray of chars
-	// int x=0, y=0;
-	// char **map=calloc(MAXY,sizeof(char*));
-	// for(int iter=0; iter<MAXY; iter++) map[iter]=calloc(MAXX,sizeof(char));
 
 	while ((read = getline(&line, &len, input)) != -1) {
 		line[strlen(line)-1] = 0; // Truncate the NL
-
-		// Read into map
-		// for(x=0; x<MAXX; x++) map[y][x] = line[x];
-		// y++;
-
-		// Copy to string
-		//asprintf(&(inst[count]), "%s", line);	
-
-		// Read into array
-		// sscanf(line,"%d,%d",
-		//	&(inst[count].x),
-		//	&(inst[count].y));
 
 		// Read tokens from single line
 		char *token;
@@ -112,10 +57,7 @@ TRange *readInput() {
 	if (line)
 	free(line);
 
-//	printMap(map);
-
 	return inst;
-//	return map;
 }
 
 int main(int argc, char *argv[]) {
@@ -126,21 +68,29 @@ int main(int argc, char *argv[]) {
 	long int count=0;
 	char *s;
 
-//	#pragma omp parallel for private(<uniq-var>) shared(<shared-var>)
 	for(i=0; array[i].from; i++) {
 		//printf("%ld %ld\n", array[i].from, array[i].to);
 		for(long int y=array[i].from; y<=array[i].to; y++) {
 			asprintf(&s, "%ld", y);
-			if(strlen(s) % 2) continue;
-			if(!strncmp(s, s+strlen(s)/2, strlen(s)/2)) {
-				printf("%s\n", s);
-				count+=y;
+			for(int parts=2; parts<=strlen(s); parts++) { // Try for n. consecutive parts
+				if(strlen(s) % parts) continue;
+				int fits=1;
+				for(int p=0; p<parts-1; p++) {
+					if(strncmp(s+p*strlen(s)/parts, s+(p+1)*strlen(s)/parts, strlen(s)/parts)) {
+						fits=0;
+						break;
+					}
+				}
+				if(fits) {
+					printf("%s\n", s);
+					count+=y;
+					break;
+				}
 			}
-		
 			free(s);
 		}
 	}
 
-	printf("%ld\n", count);
+	printf("IDs: %ld\n", count);
 	return 0;
 }
