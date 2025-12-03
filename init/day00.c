@@ -105,8 +105,7 @@ TPoint *readInput() {
 	}
 
 	fclose(input);
-	if (line)
-	free(line);
+	if (line) free(line);
 
 //	printMap(map);
 
