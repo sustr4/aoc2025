@@ -131,23 +131,50 @@ int main(int argc, char *argv[]) {
 	long long *ing=(long long*)calloc(MAXY, sizeof(TFresh));
 //	TFresh *array;
 	int i=0;	
-	int count=0;
+	long long int count=0;
 	readInput(fresh, ing);
 
 //	#pragma omp parallel for private(<uniq-var>) shared(<shared-var>)
-	for(i=0; ing[i]; i++) {
-		printf("%lld\n", ing[i]);
-		for(int y=0; fresh[y].from; y++) {
-			if((ing[i]>=fresh[y].from) &&
-			   (ing[i]<=fresh[y].to)) {
-				count++;
-				break;
+	int change=1;
+	while(change) {
+		change=0;
+		for(i=0; i<MAXX-1; i++) {
+			if((fresh[i].from==0)||(fresh[i].to==0)) continue;
+	//		printf("%lld-%lld\n", fresh[i].from, fresh[i].to);
+			for(int y=i+1; y<MAXX; y++) {
+				if((fresh[y].from==0)||(fresh[y].to==0)) continue;
+				if((fresh[i].from<=fresh[y].from) && (fresh[i].to>=fresh[y].from)) { // y Start falls into i
+					if(fresh[y].to<=fresh[i].to) { // y end also falls into i
+						fresh[y].from=0; fresh[y].to=0;
+					}
+					else {
+						fresh[i].to=fresh[y].to;
+						fresh[y].from=0; fresh[y].to=0;
+						change++;
+					}
+				}
+				if((fresh[i].from<=fresh[y].to) && (fresh[i].to>=fresh[y].to)) { // y end falls into i
+					if(fresh[y].from>=fresh[i].from) { // y start also falls into i
+						fresh[y].from=0; fresh[y].to=0;
+					}
+					else {
+						fresh[i].from=fresh[y].from;
+						fresh[y].from=0; fresh[y].to=0;
+						change++;
+					}
+				}
+	//			printf("\t%lld-%lld\n", fresh[y].from, fresh[y].to);
 			}
-
 		}
 	}
 
-	printf("%d fresh\n", count);
+	for(i=0; i<MAXX-1; i++) {
+		if((fresh[i].from==0)||(fresh[i].to==0)) continue;
+		printf("%lld-%lld\n", fresh[i].from, fresh[i].to);
+		count+=fresh[i].to-fresh[i].from+1;
+	}
+	printf("358972987438930 too high\n");
+	printf("%lld fresh\n", count);
 
 	return 0;
 }
