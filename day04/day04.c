@@ -87,7 +87,7 @@ int main(int argc, char *argv[]) {
 				}
 				if(c<4) {
 					count++;
-					map[y][x]='.';
+					map[y][x]='x';
 					change=1;
 				}
 			}
