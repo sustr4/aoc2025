@@ -14,65 +14,17 @@
 //#define MAXX 15
 //#define MAXY 16
 
-// Point structure definition
-typedef struct {
-	int x;
-	int y;
-	int z;
-} TPoint;
-
-// Comparator function example
-int comp(const void *a, const void *b)
-{
-	const int *da = (const int *) a;
-	const int *db = (const int *) b;
-	return (*da > *db) - (*da < *db);
-}
-
-// Example for calling qsort()
-//qsort(array,count,sizeof(),comp);
-
-
-// Print a two-dimensional array
-void printMap (char **map) {
-	int x,y;
-	for(y=0; y<MAXY; y++) {
-		for(x=0; x<MAXX; x++) {
-			printf("%c", map[y][x]);
-		}
-		printf("\n");
-	}
-}
-// Full block character for maps █ and border elements ┃━┗┛┏┓
-// Color printf("\033[1;31mR \033[1;32mG \033[1;34mB \033[0moff\n");
-
-// Retrieve nth neighbor from a map, diagonals are odd, side neighbors even
-int dy[] = { -1, -1, -1, 0, 1, 1,  1,  0};
-int dx[] = { -1,  0,  1, 1, 1, 0, -1, -1};
-char mapnb(char **map, int y, int x, int n) {
-	assert((n>=0) && (n<8));
-	if((y+dy[n]<0) || (y+dy[n]>=MAXY) ||
-	   (x+dx[n]<0) || (x+dx[n]>=MAXX)) return 0;
-	return(map[y+dy[n]][x+dx[n]]);
-}
-
 // Read input file line by line (e.g., into an array)
 char **readInput() {
-//int readInput() {
 	FILE * input;
 	char * line = NULL;
 	size_t len = 0;
 	ssize_t read;
-	int count = 0;
 
 	input = fopen(INPUT, "r");
 	if (input == NULL) {
 		fprintf(stderr,"Failed to open input file\n");
 		exit(1); }
-
-	// Allocate one-dimensional array of strings
-	// char **inst=(char**)calloc(MAXX, sizeof(char*));
-	// TPoint *inst=(TPoint*)calloc(MAXX, sizeof(TPoint));
 
 	// Allocate a two-dimensional arrray of chars
 	int x=0, y=0;
@@ -85,23 +37,6 @@ char **readInput() {
 		// Read into map
 		for(x=0; x<MAXX; x++) map[y][x] = line[x];
 		y++;
-
-		// Copy to string
-		//asprintf(&(inst[count]), "%s", line);	
-
-		// Read into array
-		// sscanf(line,"%d,%d",
-		//	&(inst[count].x),
-		//	&(inst[count].y));
-
-		// Read tokens from single line
-		//char *token;
-		//token = strtok(line, ",");
-		//while( 1 ) {
-		//	if(!(token = strtok(NULL, ","))) break;
-		//}
-
-		count++;
 	}
 
 	fclose(input);
@@ -110,43 +45,38 @@ char **readInput() {
 	return map;
 }
 
-int main(int argc, char *argv[]) {
+long long go(char **map, int y, int x, long long **mem) {
+	long long res=0;
 
-//	TPoint *array;
-//	int i=0;	
-//	array = readInput();
-	char **map = readInput();
-	int count=0;
+	if(y==MAXY-1) return 1;
+	if(mem[y][x]) return mem[y][x];
 
-
-	int x,y;
-
-	for(y=1; y<MAXY; y++) {
-		for(x=0; x<MAXY; x++) {
-			if((map[y-1][x]=='S') || (map[y-1][x]=='|')) {
-				if(map[y][x]=='.') {
-					map[y][x]='|';
-					continue;
-				}
-				if(map[y][x]=='^') {
-					if(x>0) {
-						map[y][x-1]='|';
-					}
-					if(x<MAXX-1) {
-						map[y][x+1]='|';
-					}
-					count++;
-				}
-			}
-		}
+	if(map[y][x]!='^') res+=go(map,y+1,x,mem);
+	else {
+		if(x>0) res+=go(map,y+1,x-1,mem);
+		if(x<MAXX-1) res+=go(map,y+1,x+1,mem);
 	}
 
-	printMap(map);
-//	#pragma omp parallel for private(<uniq-var>) shared(<shared-var>)
-//	for(i=0; array[i]; i++) {
-//		printf("%d\n", array[i]);
-//	}
-	printf("%d\n", count);
+	mem[y][x]=res;
+	return res;
+}
+
+int main(int argc, char *argv[]) {
+	char **map = readInput();
+	int S=-1;
+
+	long long **mem=calloc(MAXY,sizeof(long long*));
+	for(int iter=0; iter<MAXY; iter++) mem[iter]=calloc(MAXX,sizeof(long long));
+
+	for(int x=0; x<MAXY; x++) {
+		if(map[0][x]=='S') {
+			S=x;
+			break;
+		}
+	}
+	assert(S>=0);
+
+	printf("%lld\n", go(map,0,S,mem));
 
 	return 0;
 }
