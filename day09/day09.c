@@ -25,23 +25,18 @@ typedef struct {
 } TPoint;
 
 // Comparator function example
-int comp1(const void *a, const void *b)
+int comp(const void *a, const void *b, void *arg)
 {
 	const TPoint *da = (const TPoint *) a;
 	const TPoint *db = (const TPoint *) b;
-	return (da->x > db->x) - (da->x < db->x);
-}
-int comp2(const void *a, const void *b)
-{
-	const TPoint *da = (const TPoint *) a;
-	const TPoint *db = (const TPoint *) b;
-	return (da->y > db->y) - (da->y < db->y);
-}
-int comp3(const void *a, const void *b)
-{
-	const TPoint *da = (const TPoint *) a;
-	const TPoint *db = (const TPoint *) b;
-	return (da->orig > db->orig) - (da->orig < db->orig);
+	int member = *(const int *)arg;
+
+	switch(member) {
+		case 1: return (da->x > db->x) - (da->x < db->x);
+		case 2: return (da->y > db->y) - (da->y < db->y);
+		case 3: return (da->orig > db->orig) - (da->orig < db->orig);
+	}
+	return 0;
 }
 
 // Print a two-dimensional array
@@ -136,7 +131,7 @@ int main(int argc, char *argv[]) {
 	long long maxarea=0;
 
 	// Sort by x
-	qsort(array,MAXT,sizeof(TPoint),comp1);
+	int sort_key=1; qsort_r(array,MAXT,sizeof(TPoint),comp,&sort_key);
 	int scaled=0;
 	for(i=1; i<MAXT; i++) {
 		if(array[i].x==array[i-1].x) array[i].scalex = array[i-1].scalex;
@@ -148,7 +143,7 @@ int main(int argc, char *argv[]) {
 	}
 	printf("\n");
 	// Sort by y
-	qsort(array,MAXT,sizeof(TPoint),comp2);
+	sort_key=2; qsort_r(array,MAXT,sizeof(TPoint),comp,&sort_key);
 	scaled=0;
 	for(i=1; i<MAXT; i++) {
 		if(array[i].y==array[i-1].y) array[i].scaley = array[i-1].scaley;
@@ -160,7 +155,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	// Sort back
-	qsort(array,MAXT,sizeof(TPoint),comp3);
+	sort_key=3; qsort_r(array,MAXT,sizeof(TPoint),comp,&sort_key);
 
 	char **map=calloc(MAXY,sizeof(char*));
 	for(int iter=0; iter<MAXY; iter++) map[iter]=calloc(MAXX,sizeof(char));
