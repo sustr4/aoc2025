@@ -10,13 +10,12 @@
 // Max. 13 buttons, max. 9 lights operated by each
 // Max. 56 joltage counts 
 #define MAXBUT 14
-#define MAXLIGHT 10
 #define MAXJOLT 57
 #define INPUT "input.txt"
 #define MAXX 164
 #define MAXY 26
 //#define INPUT "unit1.txt"
-//#define MAXX 10
+//#define MAXX 4
 //#define MAXY 10
 
 // Point structure definition
@@ -161,27 +160,53 @@ TMach *readInput() {
 //	return map;
 }
 
-int press(TMach mach, char *state, int b, int depth, int maxdepth) {
+int press(TMach *mach, int i, unsigned int state, int depth, int maxdepth) {
+
+	if(depth>maxdepth) return 0;
+
+	if(state==mach[i].target) {
+		printf("M%d found at depth %d (%d == %d)\n", i, depth, state, mach[i].target);
+		return 1;
+	}
+
+	// Try all buttons:
+	for(int y=0; mach[i].butstring[y]; y++) {
+		if(press(mach, i, state ^ mach[i].button[y], depth+1, maxdepth)) return 1;
+	}
+	
 
 	return 0;
+}
+
+void printMachine(TMach *array, int i) {
+	printf("M%d: %s -- %d\n", i, array[i].lightstring, array[i].target);
+	for(int y=0; array[i].butstring[y]; y++) {
+		printf("\tB%d: %d\n", y, array[i].button[y]);
+	}
+	printf("\tJ: ");
+	for(int l=0; (l<MAXJOLT) && array[i].joltage[l]>=0; l++) printf("%d,", array[i].joltage[l]);
+	printf("\n");
 }
 
 int main(int argc, char *argv[]) {
 
 	TMach *array = readInput();
+	int sum=0;
 
 //	#pragma omp parallel for private(<uniq-var>) shared(<shared-var>)
 	for(int i=0; array[i].lightstring; i++) {
-		
-		printf("M%d: %s -- %d\n", i, array[i].lightstring, array[i].target);
-		for(int y=0; array[i].butstring[y]; y++) {
-			printf("\tB%d: %d\n", y, array[i].button[y]);
+
+		printMachine(array, i);
+
+		int d=1;
+		while(1) {
+			if(press(array, i, 0, 0, d)) break;
+			d++;
 		}
-		printf("\tJ: ");
-		for(int l=0; (l<MAXJOLT) && array[i].joltage[l]>=0; l++) printf("%d,", array[i].joltage[l]);
-		printf("\n");
-		
+		sum+=d;
+	
 	}
 
+	printf("Total presses: %d\n", sum);
 	return 0;
 }
