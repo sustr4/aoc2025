@@ -54,6 +54,9 @@ void printMap (char **map) {
 			case 3:
 				printf("\033[1;32mX");
 				break;
+			case 4:
+				printf("\033[1;34m█");
+				break;
 			default:
 				printf(" ");
 			}
@@ -198,7 +201,8 @@ int main(int argc, char *argv[]) {
 				}
 	}
 
-	printMap(map);
+
+	TPoint max[2];
 
 	for(i=0; i<MAXT; i++) {
 		for(int y=0; y<MAXT; y++) {
@@ -213,11 +217,19 @@ int main(int argc, char *argv[]) {
 
 				maxarea=area;
 				printf("[%d,%d] & [%d,%d]: %lld\n", array[i].x, array[i].y, array[y].x, array[y].y, area);
+				max[0]=array[i];
+				max[1]=array[y];
 			}
 		}
 
 	}
 
+	for(int y = max[0].scaley < max[1].scaley ? max[0].scaley : max[1].scaley;
+		y <= (max[0].scaley < max[1].scaley ? max[1].scaley : max[0].scaley); y++)
+		for(int x = max[0].scalex < max[1].scalex ? max[0].scalex : max[1].scalex;
+			x <= (max[0].scalex < max[1].scalex ? max[1].scalex : max[0].scalex); x++)
+			map[y][x]=4;
 
+//	printMap(map);
 	return 0;
 }
