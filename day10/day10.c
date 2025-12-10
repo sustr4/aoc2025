@@ -124,6 +124,29 @@ TMach *readInput() {
 			}
 		}
 
+		for(int i=0; inst[count].butstring[i]; i++) {
+			bcount=0;
+			inst[count].button[i]=(int*)malloc(MAXLIGHT*sizeof(int));
+			for(int n=0; n<MAXLIGHT; n++) inst[count].button[i][n]=-1;
+			token = strtok(inst[count].butstring[i], ",");
+			inst[count].button[i][bcount++]=atoi(token);
+			while( 1 ) {
+				if(!(token = strtok(NULL, ","))) break;
+				inst[count].button[i][bcount++]=atoi(token);
+			}
+		}
+
+		// Read Joltages
+		bcount=0;
+		inst[count].joltage=(int*)malloc(MAXJOLT*sizeof(int));
+		for(int n=0; n<MAXJOLT; n++) inst[count].joltage[n]=-1;
+		token = strtok(inst[count].joltstring, ",");
+		inst[count].joltage[bcount++]=atoi(token);
+		while( 1 ) {
+			if(!(token = strtok(NULL, ","))) break;
+			inst[count].joltage[bcount++]=atoi(token);
+		}
+
 		count++;
 	}
 
@@ -142,11 +165,15 @@ int main(int argc, char *argv[]) {
 
 //	#pragma omp parallel for private(<uniq-var>) shared(<shared-var>)
 	for(int i=0; array[i].light; i++) {
-		/*
-		printf("M%d: %s \t", i, array[i].light);
-		for(int y=0; array[i].butstring[y]; y++) printf("B%d: %s ", y, array[i].butstring[y]);
-		printf(" \t%s", array[i].joltstring);
-		printf("\n");*/
+		printf("M%d: %s\n", i, array[i].light);
+		for(int y=0; array[i].butstring[y]; y++) {
+			printf("\tB%d: ", y);
+			for(int l=0; (l<MAXLIGHT) && array[i].button[y][l]>=0; l++) printf("%d,", array[i].button[y][l]);
+			printf("\n");
+		}
+		printf("\tJ: ");
+		for(int l=0; (l<MAXJOLT) && array[i].joltage[l]>=0; l++) printf("%d,", array[i].joltage[l]);
+		printf("\n");
 	}
 
 	return 0;
