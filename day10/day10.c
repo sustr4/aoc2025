@@ -21,7 +21,8 @@
 
 // Point structure definition
 typedef struct {
-	char *light;
+	char *lightstring;
+	char *target;
 	char **butstring;
 	int **button;
 	char *joltstring;
@@ -107,8 +108,13 @@ TMach *readInput() {
 		// Read tokens from single line
 		char *token;
 		token = strtok(line, " ");
-		inst[count].light=strdup(token+1);
-		inst[count].light[strlen(inst[count].light)-1]=0;
+		inst[count].lightstring=strdup(token+1);
+		inst[count].lightstring[strlen(inst[count].lightstring)-1]=0;
+		inst[count].target=strdup(inst[count].lightstring);
+		for(int n=0; n<strlen(inst[count].lightstring); n++) {
+			if(inst[count].target[n]=='.') inst[count].target[n]=0;
+			else if (inst[count].target[n]=='#') inst[count].target[n]=1;
+		}
 		inst[count].button=(int**)calloc(MAXBUT, sizeof(int*));
 		inst[count].butstring=(char**)calloc(MAXBUT, sizeof(char*));
 		int bcount=0;
@@ -159,13 +165,21 @@ TMach *readInput() {
 //	return map;
 }
 
+int press(TMach mach, char *state, int b, int depth, int maxdepth) {
+
+	return 0;
+}
+
 int main(int argc, char *argv[]) {
 
 	TMach *array = readInput();
 
 //	#pragma omp parallel for private(<uniq-var>) shared(<shared-var>)
-	for(int i=0; array[i].light; i++) {
-		printf("M%d: %s\n", i, array[i].light);
+	for(int i=0; array[i].lightstring; i++) {
+		
+		printf("M%d: %s -- ", i, array[i].lightstring);
+		for(int l=0; l<strlen(array[i].lightstring); l++) printf("%d,", array[i].target[l]);
+		printf("\n");
 		for(int y=0; array[i].butstring[y]; y++) {
 			printf("\tB%d: ", y);
 			for(int l=0; (l<MAXLIGHT) && array[i].button[y][l]>=0; l++) printf("%d,", array[i].button[y][l]);
@@ -174,6 +188,7 @@ int main(int argc, char *argv[]) {
 		printf("\tJ: ");
 		for(int l=0; (l<MAXJOLT) && array[i].joltage[l]>=0; l++) printf("%d,", array[i].joltage[l]);
 		printf("\n");
+		
 	}
 
 	return 0;
