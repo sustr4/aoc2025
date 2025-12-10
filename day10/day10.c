@@ -22,9 +22,9 @@
 // Point structure definition
 typedef struct {
 	char *lightstring;
-	char *target;
+	unsigned int target;
 	char **butstring;
-	int **button;
+	unsigned int *button;
 	char *joltstring;
 	int *joltage;
 } TMach;
@@ -110,12 +110,10 @@ TMach *readInput() {
 		token = strtok(line, " ");
 		inst[count].lightstring=strdup(token+1);
 		inst[count].lightstring[strlen(inst[count].lightstring)-1]=0;
-		inst[count].target=strdup(inst[count].lightstring);
 		for(int n=0; n<strlen(inst[count].lightstring); n++) {
-			if(inst[count].target[n]=='.') inst[count].target[n]=0;
-			else if (inst[count].target[n]=='#') inst[count].target[n]=1;
+			if (inst[count].lightstring[n]=='#') inst[count].target|= 1 << n;
 		}
-		inst[count].button=(int**)calloc(MAXBUT, sizeof(int*));
+		inst[count].button=(unsigned int*)calloc(MAXBUT, sizeof(unsigned int));
 		inst[count].butstring=(char**)calloc(MAXBUT, sizeof(char*));
 		int bcount=0;
 		while( 1 ) {
@@ -132,13 +130,11 @@ TMach *readInput() {
 
 		for(int i=0; inst[count].butstring[i]; i++) {
 			bcount=0;
-			inst[count].button[i]=(int*)malloc(MAXLIGHT*sizeof(int));
-			for(int n=0; n<MAXLIGHT; n++) inst[count].button[i][n]=-1;
 			token = strtok(inst[count].butstring[i], ",");
-			inst[count].button[i][bcount++]=atoi(token);
+			inst[count].button[i]|=1 << atoi(token);
 			while( 1 ) {
 				if(!(token = strtok(NULL, ","))) break;
-				inst[count].button[i][bcount++]=atoi(token);
+				inst[count].button[i]|=1 << atoi(token);
 			}
 		}
 
@@ -177,13 +173,9 @@ int main(int argc, char *argv[]) {
 //	#pragma omp parallel for private(<uniq-var>) shared(<shared-var>)
 	for(int i=0; array[i].lightstring; i++) {
 		
-		printf("M%d: %s -- ", i, array[i].lightstring);
-		for(int l=0; l<strlen(array[i].lightstring); l++) printf("%d,", array[i].target[l]);
-		printf("\n");
+		printf("M%d: %s -- %d\n", i, array[i].lightstring, array[i].target);
 		for(int y=0; array[i].butstring[y]; y++) {
-			printf("\tB%d: ", y);
-			for(int l=0; (l<MAXLIGHT) && array[i].button[y][l]>=0; l++) printf("%d,", array[i].button[y][l]);
-			printf("\n");
+			printf("\tB%d: %d\n", y, array[i].button[y]);
 		}
 		printf("\tJ: ");
 		for(int l=0; (l<MAXJOLT) && array[i].joltage[l]>=0; l++) printf("%d,", array[i].joltage[l]);
