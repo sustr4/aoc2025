@@ -13,10 +13,13 @@
 #define MAXJOLT 57
 #define INPUT "input.txt"
 #define MAXX 164
-#define MAXY 26
 //#define INPUT "unit1.txt"
 //#define MAXX 4
-//#define MAXY 10
+//#define INPUT "unit2.txt"
+//#define MAXX 151
+//#define INPUT "unit3.txt"
+//#define MAXX 2
+
 
 // Point structure definition
 typedef struct {
@@ -40,29 +43,6 @@ int comp(const void *a, const void *b)
 //qsort(array,count,sizeof(),comp);
 
 
-// Print a two-dimensional array
-void printMap (char **map) {
-	int x,y;
-	for(y=0; y<MAXY; y++) {
-		for(x=0; x<MAXX; x++) {
-			printf("%c", map[y][x]);
-		}
-		printf("\n");
-	}
-}
-// Full block character for maps █ and border elements ┃━┗┛┏┓
-// Color printf("\033[1;31mR \033[1;32mG \033[1;34mB \033[0moff\n");
-
-// Retrieve nth neighbor from a map, diagonals are odd, side neighbors even
-int dy[] = { -1, -1, -1, 0, 1, 1,  1,  0};
-int dx[] = { -1,  0,  1, 1, 1, 0, -1, -1};
-char mapnb(char **map, int y, int x, int n) {
-	assert((n>=0) && (n<8));
-	if((y+dy[n]<0) || (y+dy[n]>=MAXY) ||
-	   (x+dx[n]<0) || (x+dx[n]>=MAXX)) return 0;
-	return(map[y+dy[n]][x+dx[n]]);
-}
-
 // Read input file line by line (e.g., into an array)
 TMach *readInput() {
 //int readInput() {
@@ -80,11 +60,6 @@ TMach *readInput() {
 	// Allocate one-dimensional array of strings
 	// char **inst=(char**)calloc(MAXX, sizeof(char*));
 	TMach *inst=(TMach*)calloc(MAXX, sizeof(TMach));
-
-	// Allocate a two-dimensional arrray of chars
-	// int x=0, y=0;
-	// char **map=calloc(MAXY,sizeof(char*));
-	// for(int iter=0; iter<MAXY; iter++) map[iter]=calloc(MAXX,sizeof(char));
 
 	while ((read = getline(&line, &len, input)) != -1) {
 		line[strlen(line)-1] = 0; // Truncate the NL
@@ -165,7 +140,7 @@ int press(TMach *mach, int i, unsigned int state, int depth, int maxdepth) {
 	if(depth>maxdepth) return 0;
 
 	if(state==mach[i].target) {
-		printf("M%d found at depth %d (%d == %d)\n", i, depth, state, mach[i].target);
+//		printf("M%d found at depth %d (%d == %d)\n", i, depth, state, mach[i].target);
 		return 1;
 	}
 
@@ -174,6 +149,36 @@ int press(TMach *mach, int i, unsigned int state, int depth, int maxdepth) {
 		if(press(mach, i, state ^ mach[i].button[y], depth+1, maxdepth)) return 1;
 	}
 	
+
+	return 0;
+}
+
+int jolt(TMach *mach, int i, unsigned int *state, int depth, int maxdepth) {
+
+	if(depth>maxdepth) return 0;
+
+	int zeroes=1;
+	for(int y=0; y<strlen(mach[i].lightstring); y++) {
+		if(state[y]<0) return 0;
+		if(state[y]) {
+			zeroes=0;
+			break;
+		}
+	}
+
+	if(zeroes) {
+		printf("M%d found at depth %d\n", i, depth);
+		return 1;
+	}
+		
+	// Try all buttons:
+	for(int y=0; mach[i].butstring[y]; y++) {
+		for(int b=0; b<strlen(mach[i].lightstring); b++)
+			if(mach[i].button[y] & (1 << b)) state[y]--;
+		if(jolt(mach, i, state, depth+1, maxdepth)) return 1;
+		for(int b=0; b<strlen(mach[i].lightstring); b++)
+			if(mach[i].button[y] & (1 << b)) state[y]++;
+	}
 
 	return 0;
 }
@@ -204,9 +209,66 @@ int main(int argc, char *argv[]) {
 			d++;
 		}
 		sum+=d;
+
+		int jolts=0;
+		for(jolts = 0; array[i].joltage[jolts]>=0; jolts++);
+		int buttons=0;
+		for(buttons = 0; array[i].butstring[buttons]; buttons++);
+		d=0;
+		for(int j=0; j<jolts; j++) if(d<array[i].joltage[j]) d=array[i].joltage[j];
+
+		printf("M%d: %d buttons x %d joltage meters, start at %d\n", i, buttons, jolts, d);
+
+		char *fname;
+		asprintf(&fname, "%03d.sm2", i);
+		FILE *f = fopen(fname, "wt");
+		if (f == NULL) {
+			perror("Failed to open file");
+			return 1;
+		}
+
+		fprintf(f, "(set-logic QF_LIA)\n; Declare variables\n");
+		for(int b=0; b<buttons; b++) {
+			fprintf(f, "(declare-const %c Int)\n",'a'+b);
+		}
+
+		fprintf(f, "\n; Define system of equations\n");
+		for(int b=0; b<buttons; b++) {
+			fprintf(f, "(assert (>= %c 0))\n",'a'+b);
+		}
+		for(int j=0; j<jolts; j++) {
+			fprintf(f,"(assert (= %d (+ ", array[i].joltage[j]);
+			for(int b=0; b<buttons; b++) {
+				if(array[i].button[b] & (1 << j)) {
+					fprintf(f, "%c ", 'a'+b);
+
+				}
+			}
+			fprintf(f,")))\n");
+		}
+
+//		fprintf(f,"(assert (= 12 (+ ");
+//		for(int b=0; b<buttons; b++) {
+//			fprintf(f, "%c ", 'a'+b);
+//		}
+//		fprintf(f,")))\n");
+
+		fprintf(f,";Create an optimizer\n(minimize (+ ");
+		for(int b=0; b<buttons; b++) {
+			fprintf(f, "%c ", 'a'+b);
+		}
+		fprintf(f,"))\n(set-option :opt.priority pareto)\n");
+
+		fprintf(f, "\n; Check satisfiability and get the model\n(check-sat)\n(get-model)\n(get-objectives)\n");
+//		fprintf(f, "\n; Check satisfiability and get the model\n(check-sat)\n(get-objectives)\n");
+
+		fclose(f);
+		free(fname);
+		
 	
 	}
 
-	printf("Total presses: %d\n", sum);
+	printf("Total presses for lights : %d\n", sum);
+	printf("Don't forget to run ./day10-wrap.sh for Task 2\n");
 	return 0;
 }
