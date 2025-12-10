@@ -116,13 +116,10 @@ TPoint *readInput() {
 
 int main(int argc, char *argv[]) {
 
-//	TPoint *array;
-//	int i=0;	
-//	array = readInput();
-	readInput();
+	TPoint *array = readInput();
 
 //	#pragma omp parallel for private(<uniq-var>) shared(<shared-var>)
-//	for(i=0; array[i]; i++) {
+//	for(int i=0; array[i]; i++) {
 //		printf("%d\n", array[i]);
 //	}
 
