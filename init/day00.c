@@ -62,7 +62,6 @@ TPoint *readInput() {
 	FILE * input;
 	char * line = NULL;
 	size_t len = 0;
-	ssize_t read;
 	int count = 0;
 
 	input = fopen(INPUT, "r");
@@ -79,7 +78,7 @@ TPoint *readInput() {
 	// char **map=calloc(MAXY,sizeof(char*));
 	// for(int iter=0; iter<MAXY; iter++) map[iter]=calloc(MAXX,sizeof(char));
 
-	while ((read = getline(&line, &len, input)) != -1) {
+	while (getline(&line, &len, input) != -1) {
 		line[strlen(line)-1] = 0; // Truncate the NL
 
 		// Read into map
@@ -109,8 +108,8 @@ TPoint *readInput() {
 
 //	printMap(map);
 
-	return 0;
-//	return inst;
+//	return 0;
+	return inst;
 //	return map;
 }
 
