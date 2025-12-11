@@ -18,6 +18,7 @@
 typedef struct {
 	char *name;
 	int *conn;
+	int paths;
 } TDev;
 
 int id(TDev* dev, char *name) {
@@ -30,6 +31,7 @@ int id(TDev* dev, char *name) {
 
 	dev[i].name=strdup(name);
 	dev[i].conn = (int*)calloc(MAXY,sizeof(int));
+	dev[i].paths=-1;
 	return i;
 }
 
@@ -125,16 +127,38 @@ TDev *readInput() {
 	return inst;
 }
 
+int step(TDev *dev, int i, int O, int deep) {
+	if(deep>MAXX) return 0;
+
+	if(dev[i].paths>=0) return dev[i].paths;
+
+	if(i==O) return 1;
+
+	int retval=0;
+	for(int y=0; dev[i].conn[y]; y++) {
+		retval+=step(dev, dev[i].conn[y], O, deep+1);
+	}
+
+	return retval;
+}
+
 int main(int argc, char *argv[]) {
 
 	TDev *array = readInput();
 
 //	#pragma omp parallel for private(<uniq-var>) shared(<shared-var>)
-	for(int i=1; array[i].name; i++) { // XXX: Run from 1!
-		printf("%d: %s\t", i, array[i].name);
-		for(int y=0; array[i].conn[y]; y++) printf("%s ", array[array[i].conn[y]].name);
-		printf("\n");
-	}
+//	for(int i=1; array[i].name; i++) { // XXX: Run from 1!
+//		printf("%d: %s\t", i, array[i].name);
+//		for(int y=0; array[i].conn[y]; y++) printf("%s ", array[array[i].conn[y]].name);
+//		printf("\n");
+//	}
 
+	int S=id(array, "you");
+	int O=id(array, "out");
+	printf("Starting from %d to %d\n", S, O);
+
+	int c=step(array, S, O, 0);
+
+	printf("Fount %d paths\n", c);
 	return 0;
 }
