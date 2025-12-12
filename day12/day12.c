@@ -69,6 +69,20 @@ char **cleanMap(int x, int y) {
 	return map;
 }
 
+int fillRotations(TShape *shape, int i) {
+	shape[i].rot[0]=shape[i].map;
+
+	for(int r=1; r<4; r++) {
+		shape[i].rot[r]=cleanMap(3,3);
+		for(int y=0; y<3; y++)
+			for(int x=0; x<3; x++)
+				shape[i].rot[r][y][x]=shape[i].rot[r-1][x][2-y];
+			
+	}
+
+	return 0;
+}
+
 // Read input file line by line (e.g., into an array)
 int readInput(TRegion *inst, TShape *shape) {
 //int readInput() {
@@ -101,6 +115,7 @@ int readInput(TRegion *inst, TShape *shape) {
 				sl++;
 			}
 			if(strlen(line)<2) {
+				fillRotations(shape, shapes);
 				printf("Shape %d read\n", shapes);
 				shapes++;
 				sl=0;
@@ -147,7 +162,7 @@ int main(int argc, char *argv[]) {
 
 	for(int i=0; i<MAXY; i++) {
 		printf("%d:\n", i);
-		printMap(shape[i].map, 3, 3);
+		printMap(shape[i].rot[1], 3, 3);
 	}
 
 	return 0;
